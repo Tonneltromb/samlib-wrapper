@@ -2,6 +2,8 @@ package com.ymatin.samlib.controller;
 
 import com.ymatin.samlib.dao.author.AuthorDao;
 import com.ymatin.samlib.dao.author.AuthorDto;
+import com.ymatin.samlib.dao.author.AuthorInfoDao;
+import com.ymatin.samlib.dao.author.AuthorInfoDto;
 import com.ymatin.samlib.service.FillDatabaseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,6 +21,7 @@ public class FillDatabaseFromSamlibController {
 
     private FillDatabaseHelper dbHelper;
     private AuthorDao authorDao;
+    private AuthorInfoDao authorInfoDao;
 
     @Autowired
     public void setDbHelper(FillDatabaseHelper dbHelper) {
@@ -28,6 +31,11 @@ public class FillDatabaseFromSamlibController {
     @Autowired
     public void setAuthorDao(AuthorDao authorDao) {
         this.authorDao = authorDao;
+    }
+
+    @Autowired
+    public void setAuthorInfoDao(AuthorInfoDao authorInfoDao) {
+        this.authorInfoDao = authorInfoDao;
     }
 
     @GetMapping("/welcome")
@@ -45,7 +53,9 @@ public class FillDatabaseFromSamlibController {
     @GetMapping("/findAuthor")
     public String addAuthor(@RequestParam("authorId") Long authorId, Model model) {
         AuthorDto dto = authorDao.findAuthorById(authorId);
+        AuthorInfoDto infoDto = authorInfoDao.findAuthorInfoByAuthorId(authorId);
         model.addAttribute("author", dto);
+        model.addAttribute("info", infoDto);
         return "filldb/filldb-welcome-page";
     }
 
@@ -63,5 +73,11 @@ public class FillDatabaseFromSamlibController {
         return "filldb/filldb-welcome-page";
     }
 
+    @GetMapping("/getAllInfos")
+    public String getAllInfos(Model model) {
+        List<AuthorInfoDto> allInfos = authorInfoDao.findAllInfos();
+        model.addAttribute("infos", allInfos);
+        return "filldb/filldb-welcome-page";
+    }
 
 }

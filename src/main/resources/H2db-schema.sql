@@ -10,17 +10,18 @@ CREATE TABLE authors (
   PRIMARY KEY (author_ID)
 );
 
+DROP TABLE IF EXISTS author_info;
 CREATE TABLE author_info (
-  info_ID INT AUTO_INCREMENT,
-  author_ID INT,
+  info_ID     INT AUTO_INCREMENT,
+  author_ID   INT,
   about_author VARCHAR(2000),
   day_of_birth   INT,
   month_of_birth INT,
   year_of_birth  INT,
-  email VARCHAR(128),
-  web_site VARCHAR(128),
+  email VARCHAR(64),
+  web_site VARCHAR(64),
   PRIMARY KEY (info_ID),
-  FOREIGN KEY (author_ID) REFERENCES authors(author_ID)
+  CONSTRAINT FK_1 FOREIGN KEY (author_ID) REFERENCES authors(author_ID)
 );
 
 DROP TABLE IF EXISTS books;

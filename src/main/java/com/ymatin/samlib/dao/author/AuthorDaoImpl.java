@@ -1,7 +1,6 @@
 package com.ymatin.samlib.dao.author;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -11,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class AuthorDaoImpl implements AuthorDao {
@@ -58,7 +58,7 @@ public class AuthorDaoImpl implements AuthorDao {
         params.addValue("samlibId", dto.getSamlibId());
         int changedRows = jdbcTemplate.update(INSERT_AUTHOR, params, keyHolder, new String[]{"author_ID"});
         if (changedRows > 0) {
-            authorIdFromDB = keyHolder.getKey().longValue();
+            authorIdFromDB = Objects.requireNonNull(keyHolder.getKey()).longValue();
         }
         return authorIdFromDB;
     }

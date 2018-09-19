@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// todo: реализовать проверку наличия заполненных обязательных полей для записи в бд
+
 @Service
 public class FillDatabaseHelper {
 
@@ -123,7 +125,7 @@ public class FillDatabaseHelper {
 //            todo String email = prepareEmail(document);
 //            todo String webSite = prepareWebSite(document);
 
-        dto.setAboutAuthor(authorInfo);
+//        dto.setAboutAuthor(authorInfo);
         dto.setDayOfBirth(birthDateParts.get("day"));
         dto.setMonthOfBirth(birthDateParts.get("month"));
         dto.setYearOfBirth(birthDateParts.get("year"));
