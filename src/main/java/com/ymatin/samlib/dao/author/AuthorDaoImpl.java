@@ -16,6 +16,7 @@ import java.util.Objects;
 public class AuthorDaoImpl implements AuthorDao {
 
     private static final String SELECT_AUTHOR_BY_ID = "SELECT * FROM authors WHERE author_ID = :authorId";
+    private static final String SELECT_AUTHOR_BY_AUTHOR_ID = "SELECT * FROM authors WHERE samlib_ID = :samlibId";
     private static final String INSERT_AUTHOR = "INSERT INTO authors " +
             "(author_ID, first_name, last_name, father_name, short_name, pseudonym, samlib_ID) " +
             "VALUES (:authorId, :firstName, :lastName, :fatherName, :shortName, :pseudonym, :samlibId)";
@@ -36,12 +37,22 @@ public class AuthorDaoImpl implements AuthorDao {
         return jdbcTemplate
                 .queryForObject(SELECT_AUTHOR_BY_ID,
                         paramMap,
-                        (rs, rowNum) -> getFullMappedAuthorDto(rs));
+                        (rs, rowNum) -> fullAuthorDtoMapper(rs));
+    }
+
+    @Override
+    public AuthorDto findAuthorBySamlibId(String samlibId) {
+        HashMap<String, Object> paramMap = new HashMap<>();
+        paramMap.put("samlibId", samlibId);
+        return jdbcTemplate
+                .queryForObject(SELECT_AUTHOR_BY_AUTHOR_ID,
+                        paramMap,
+                        (rs, rowNum) -> fullAuthorDtoMapper(rs));
     }
 
     @Override
     public List<AuthorDto> findAllAuthors() {
-        return jdbcTemplate.query(SELECT_ALL, (rs, rowNum) -> getFullMappedAuthorDto(rs));
+        return jdbcTemplate.query(SELECT_ALL, (rs, rowNum) -> fullAuthorDtoMapper(rs));
     }
 
     @Override
@@ -74,7 +85,7 @@ public class AuthorDaoImpl implements AuthorDao {
     public void updateAuthor(AuthorDto dto) {
     }
 
-    private AuthorDto getFullMappedAuthorDto(ResultSet rs) throws SQLException {
+    private AuthorDto fullAuthorDtoMapper(ResultSet rs) throws SQLException {
         AuthorDto authorDto = new AuthorDto();
         authorDto.setAuthorId(rs.getLong("author_ID"));
         authorDto.setFirstName(rs.getString("first_name"));

@@ -5,6 +5,8 @@ import com.ymatin.samlib.dao.author.AuthorDao;
 import com.ymatin.samlib.dao.author.AuthorDto;
 import com.ymatin.samlib.dao.author.AuthorInfoDao;
 import com.ymatin.samlib.dao.author.AuthorInfoDto;
+import com.ymatin.samlib.dao.book.BookDao;
+import com.ymatin.samlib.dao.book.BookDto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.TextNode;
@@ -17,12 +19,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 // todo: реализовать проверку наличия заполненных обязательных полей для записи в бд
+// todo: реализовать функционал проверки изменения размера указанной книги и появления у указанного автора новых произведений
 
 @Service
 public class FillDatabaseHelper {
 
     private AuthorDao authorDao;
     private AuthorInfoDao authorInfoDao;
+    private BookDao bookDao;
 
     @Autowired
     public void setAuthorDao(AuthorDao authorDao) {
@@ -32,6 +36,11 @@ public class FillDatabaseHelper {
     @Autowired
     public void setAuthorInfoDao(AuthorInfoDao authorInfoDao) {
         this.authorInfoDao = authorInfoDao;
+    }
+
+    @Autowired
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
     }
 
     public Long addAuthorByPageReference(String authorPageReference) {
@@ -46,7 +55,7 @@ public class FillDatabaseHelper {
             if (authorId != null) {
                 AuthorInfoDto authorInfoDto = selectAuthorInfoFromSamlib(document, url);
                 authorInfoDto.setAuthorId(authorId);
-                authorInfoId = authorInfoDao.addAuthorInfo(authorInfoDto);
+                authorInfoDao.addAuthorInfo(authorInfoDto);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -58,7 +67,6 @@ public class FillDatabaseHelper {
      * Просмотр топ 40 Самиздата с записью в бд новых авторов
      */
     public void checkTop40(String url) {
-
         try {
             Document document = Jsoup.connect(url).get();
             Elements trs = document
@@ -69,8 +77,8 @@ public class FillDatabaseHelper {
                     .get(0)
                     .select("tbody > tr");
             trs.stream().skip(1).forEach(tr -> {
-                // проверяем, есть ли автор в базе
-                // нужна таблица с записями топ 100, из которой берутся топ 40 и сначала проверяем по ней, чтобы не делать выборку по всей бд
+                // todo проверяем, есть ли автор в базе
+                // todo нужна таблица с записями топ 100, из которой берутся топ 40 и сначала проверяем по ней, чтобы не делать выборку по всей бд
 
                 String b = tr.select("td b").get(0).text();
                 int i = extractInteger(b);
@@ -83,16 +91,9 @@ public class FillDatabaseHelper {
         }
     }
 
-    // todo: реализовать функционал проверки изменения размера указанной книги
-    // todo: и появления у указанного автора новых произведений
-
     private AuthorDto selectAuthorFromSamlib(Document document, String url) {
         AuthorDto dto = new AuthorDto();
         try {
-//            dto = new AuthorDto();
-//            String url = prepareUrl(authorPageReference);
-//            Document document = Jsoup.connect(url).get();
-
             String samlibId = extractSamlibIdFromUrl(url);
             String shortName = prepareShortName(document);
             Map<String, String> authorInitials = prepareAuthorInitials(url);
@@ -116,33 +117,27 @@ public class FillDatabaseHelper {
 
     private AuthorInfoDto selectAuthorInfoFromSamlib(Document document, String url) {
         AuthorInfoDto dto = new AuthorInfoDto();
-//        try {
-//            String url = prepareUrl(authorPageReference);
-//            Document document = Jsoup.connect(url).get();
-
         Map<String, Integer> birthDateParts = prepareBirthDate(document);
         String authorInfo = prepareAboutAuthorInfo(document);
 //            todo String email = prepareEmail(document);
 //            todo String webSite = prepareWebSite(document);
 
-//        dto.setAboutAuthor(authorInfo);
+        dto.setAboutAuthor(authorInfo);
         dto.setDayOfBirth(birthDateParts.get("day"));
         dto.setMonthOfBirth(birthDateParts.get("month"));
         dto.setYearOfBirth(birthDateParts.get("year"));
 //            todo dto.setEmail(email);
 //            todo dto.setWebSite(webSite);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         return dto;
     }
 
     private String prepareWebSite(Document document) {
-        return null;
+        String webSite = null;
+        return webSite;
     }
 
     private String prepareEmail(Document document) {
-//        String email = null;
+        String email = null;
 //        Optional<Element>  optional = document
 //                .select("ul li b")
 //                .stream()
@@ -155,7 +150,7 @@ public class FillDatabaseHelper {
 //        if (optional.isPresent()) {
 //            email = optional.get().text();
 //        }
-        return null;
+        return email;
     }
 
     private String prepareAboutAuthorInfo(Document document) {
@@ -192,6 +187,7 @@ public class FillDatabaseHelper {
     }
 
     private Integer extractInteger(String string) {
+        // todo: добавить обработчик эксепшена
         return Integer.parseInt(string.split("\\D+")[0]);
     }
 
@@ -301,9 +297,53 @@ public class FillDatabaseHelper {
         return Collections.unmodifiableMap(birthDatePartsMap);
     }
 
+    /**
+     * Поиск произведений автора
+     */
+    public void searchAndInsertBooksBySamlibId(String ref, int minimalAllowedSize) {
+        String samlibId = extractSamlibIdFromUrl(ref);
+//        authorDao.findAuthorBySamlibId(samlibId);
+        try {
+            String url = prepareUrl(ref);
+            Document d = Jsoup.connect(url).get();
+
+            Elements select = d
+                    .select("body > dd")
+                    .select("table + dl")
+                    .select("dl dt li");
+
+            select
+                    .stream()
+                    .filter(element -> {
+                        String text = element.select(" > a + b").text();
+                        Integer integer = extractInteger(text);
+                        return integer > minimalAllowedSize;
+                    })
+                    .forEach(e -> {
+                        BookDto dto = new BookDto();
+                        // извлечь название
+                        String title = e.select("> a > b").text();
+                        // извлечь размер
+                        Integer size = extractInteger(e.select("> a + b").text());
+                        // извлечь ссылку
+                        String href = e.select("> a").attr("href");
+                        dto.setTitle(title);
+                        dto.setSamlibRef(href);
+                        dto.setSize(size);
+
+                        // добавить в бд
+                        bookDao.addBook(dto);
+                    });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public static void main(String[] args) throws IOException {
         String ref = "http://samlib.ru/m/metelxskij_n_a/indexvote.shtml";
+//        String ref = "http://samlib.ru/p/pupkin_wasja_ibragimowich/indexvote.shtml";
 //        String top = "http://samlib.ru/rating/top40/";
         FillDatabaseHelper helper = new FillDatabaseHelper();
 //        helper.checkTop40(top);

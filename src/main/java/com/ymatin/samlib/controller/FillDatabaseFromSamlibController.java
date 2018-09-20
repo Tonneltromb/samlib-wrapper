@@ -4,6 +4,8 @@ import com.ymatin.samlib.dao.author.AuthorDao;
 import com.ymatin.samlib.dao.author.AuthorDto;
 import com.ymatin.samlib.dao.author.AuthorInfoDao;
 import com.ymatin.samlib.dao.author.AuthorInfoDto;
+import com.ymatin.samlib.dao.book.BookDao;
+import com.ymatin.samlib.dao.book.BookDto;
 import com.ymatin.samlib.service.FillDatabaseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -22,6 +24,7 @@ public class FillDatabaseFromSamlibController {
     private FillDatabaseHelper dbHelper;
     private AuthorDao authorDao;
     private AuthorInfoDao authorInfoDao;
+    private BookDao bookDao;
 
     @Autowired
     public void setDbHelper(FillDatabaseHelper dbHelper) {
@@ -36,6 +39,11 @@ public class FillDatabaseFromSamlibController {
     @Autowired
     public void setAuthorInfoDao(AuthorInfoDao authorInfoDao) {
         this.authorInfoDao = authorInfoDao;
+    }
+
+    @Autowired
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
     }
 
     @GetMapping("/welcome")
@@ -80,4 +88,16 @@ public class FillDatabaseFromSamlibController {
         return "filldb/filldb-welcome-page";
     }
 
+    @GetMapping("/allBooks")
+    public String allBooks(Model model) {
+        List<BookDto> books = bookDao.getBooks();
+        model.addAttribute("books", books);
+        return "filldb/filldb-welcome-page";
+    }
+
+    @GetMapping("/searchBooks")
+    public String searchBooks(@RequestParam("ref") String ref) {
+        dbHelper.searchAndInsertBooksBySamlibId(ref, 100);
+        return "filldb/filldb-welcome-page";
+    }
 }

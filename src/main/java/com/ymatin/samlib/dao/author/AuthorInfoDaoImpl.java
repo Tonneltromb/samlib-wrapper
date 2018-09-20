@@ -38,7 +38,7 @@ public class AuthorInfoDaoImpl implements AuthorInfoDao {
         return jdbcTemplate
                 .queryForObject(SELECT_AUTHOR_INFO_BY_INFO_ID,
                         paramMap,
-                        (rs, rowNum) -> getFullMappedAuthorInfoDto(rs));
+                        (rs, rowNum) -> fullAuthorInfoDtoMapper(rs));
     }
 
     @Override
@@ -48,12 +48,12 @@ public class AuthorInfoDaoImpl implements AuthorInfoDao {
         return jdbcTemplate
                 .queryForObject(SELECT_AUTHOR_INFO_BY_AUTHOR_ID,
                         paramMap,
-                        (rs, rowNum) -> getFullMappedAuthorInfoDto(rs));
+                        (rs, rowNum) -> fullAuthorInfoDtoMapper(rs));
     }
 
     @Override
     public List<AuthorInfoDto> findAllInfos() {
-        return jdbcTemplate.query(SELECT_ALL, (rs, rowNum) -> getFullMappedAuthorInfoDto(rs));
+        return jdbcTemplate.query(SELECT_ALL, (rs, rowNum) -> fullAuthorInfoDtoMapper(rs));
     }
 
     @Override
@@ -95,7 +95,7 @@ public class AuthorInfoDaoImpl implements AuthorInfoDao {
 
     }
 
-    private AuthorInfoDto getFullMappedAuthorInfoDto(ResultSet rs) throws SQLException {
+    private AuthorInfoDto fullAuthorInfoDtoMapper(ResultSet rs) throws SQLException {
         AuthorInfoDto dto = new AuthorInfoDto();
         dto.setInfoId(rs.getLong("info_ID"));
         dto.setAuthorId(rs.getLong("author_ID"));
@@ -105,6 +105,6 @@ public class AuthorInfoDaoImpl implements AuthorInfoDao {
         dto.setYearOfBirth(rs.getInt("year_of_birth"));
         dto.setEmail(rs.getString("email"));
         dto.setWebSite(rs.getString("web_site"));
-        return null;
+        return dto;
     }
 }

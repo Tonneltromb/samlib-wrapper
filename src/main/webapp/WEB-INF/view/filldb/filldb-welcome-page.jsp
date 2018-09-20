@@ -27,6 +27,11 @@
     <input type="submit" value="Find author by ID"/>
 </form>
 <hr>
+<form action="/filldb/searchBooks">
+    <input type="text" name="ref"/>
+    <input type="submit" value="Find books"/>
+</form>
+<hr>
 <a href="/filldb/findAll">
     <button>Find all</button>
 </a>
@@ -34,6 +39,8 @@
 <a href="/filldb/getAllInfos">
     <button>Find all infos</button>
 </a>
+<hr>
+<a href="/filldb/allBooks"><button>Get books</button></a>
 <c:if test="${not empty author}">
     <hr>
     <div>
@@ -109,6 +116,25 @@
             </c:forEach>
         </table>
     </div>
+</c:if>
+<c:if test="${not empty books}">
+    <hr>
+    <table>
+        <tr>
+            <th>Book Id</th>
+            <th>Title</th>
+            <th>Ref</th>
+            <th>size</th>
+        </tr>
+            <c:forEach items="${books}" var="b">
+                <tr>
+                    <td>${b.bookId}</td>
+                    <td>${b.title}</td>
+                    <td>${b.samlibRef}</td>
+                    <td>${b.size}</td>
+                </tr>
+            </c:forEach>
+    </table>
 </c:if>
 </body>
 </html>

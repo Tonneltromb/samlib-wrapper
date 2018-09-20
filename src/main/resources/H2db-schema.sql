@@ -1,33 +1,35 @@
 DROP TABLE IF EXISTS authors;
 CREATE TABLE authors (
-  author_ID      INT AUTO_INCREMENT,
-  first_name     VARCHAR(64),
-  last_name      VARCHAR(64),
-  father_name    VARCHAR(64),
-  short_name     VARCHAR(64),
-  pseudonym      VARCHAR(64),
-  samlib_ID      VARCHAR(32),
+  author_ID   INT AUTO_INCREMENT,
+  first_name  VARCHAR(64),
+  last_name   VARCHAR(64),
+  father_name VARCHAR(64),
+  short_name  VARCHAR(64),
+  pseudonym   VARCHAR(64),
+  samlib_ID   VARCHAR(32),
   PRIMARY KEY (author_ID)
 );
 
 DROP TABLE IF EXISTS author_info;
 CREATE TABLE author_info (
-  info_ID     INT AUTO_INCREMENT,
-  author_ID   INT,
-  about_author VARCHAR(2000),
+  info_ID        INT AUTO_INCREMENT,
+  author_ID      INT,
+  about_author   VARCHAR(2000),
   day_of_birth   INT,
   month_of_birth INT,
   year_of_birth  INT,
-  email VARCHAR(64),
-  web_site VARCHAR(64),
+  email          VARCHAR(64),
+  web_site       VARCHAR(64),
   PRIMARY KEY (info_ID),
-  CONSTRAINT FK_1 FOREIGN KEY (author_ID) REFERENCES authors(author_ID)
+  FOREIGN KEY (author_ID) REFERENCES authors (author_ID)
 );
 
 DROP TABLE IF EXISTS books;
 CREATE TABLE books (
-  book_ID INT AUTO_INCREMENT,
-  title   VARCHAR(256) NOT NULL,
+  book_ID    INT AUTO_INCREMENT,
+  title      VARCHAR(256) NOT NULL,
+  samlib_ref VARCHAR(256) NOT NULL,
+  size       INT,
   PRIMARY KEY (book_ID)
 );
 

@@ -8,4 +8,5 @@ public interface AuthorDao {
     Long addAuthor(AuthorDto dto);
     void deleteAuthor(Long authorId);
     void updateAuthor(AuthorDto dto);
+    AuthorDto findAuthorBySamlibId(String samlibId);
 }
