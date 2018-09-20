@@ -41,6 +41,8 @@
 </a>
 <hr>
 <a href="/filldb/allBooks"><button>Get books</button></a>
+<hr>
+<a href="/filldb/content"><button>content</button></a>
 <c:if test="${not empty author}">
     <hr>
     <div>
@@ -135,6 +137,11 @@
                 </tr>
             </c:forEach>
     </table>
+</c:if>
+<c:if test="${not empty content}">
+    <p>
+        ${content}
+    </p>
 </c:if>
 </body>
 </html>

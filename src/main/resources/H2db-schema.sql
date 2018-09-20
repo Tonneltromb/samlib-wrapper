@@ -13,7 +13,7 @@ CREATE TABLE authors (
 DROP TABLE IF EXISTS author_info;
 CREATE TABLE author_info (
   info_ID        INT AUTO_INCREMENT,
-  author_ID      INT,
+  author_ID      INT NOT NULL,
   about_author   VARCHAR(2000),
   day_of_birth   INT,
   month_of_birth INT,
@@ -31,6 +31,15 @@ CREATE TABLE books (
   samlib_ref VARCHAR(256) NOT NULL,
   size       INT,
   PRIMARY KEY (book_ID)
+);
+
+DROP TABLE IF EXISTS chapters;
+CREATE TABLE chapters (
+  CHAPTER_ID INT AUTO_INCREMENT,
+  BOOK_ID    INT NOT NULL,
+  TITLE      VARCHAR(64),
+  PRIMARY KEY (CHAPTER_ID),
+  FOREIGN KEY (BOOK_ID) REFERENCES books (book_ID)
 );
 
 DROP TABLE IF EXISTS books_authors;

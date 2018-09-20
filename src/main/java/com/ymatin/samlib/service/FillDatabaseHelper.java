@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 // todo: реализовать проверку наличия заполненных обязательных полей для записи в бд
@@ -330,9 +331,10 @@ public class FillDatabaseHelper {
                         dto.setTitle(title);
                         dto.setSamlibRef(href);
                         dto.setSize(size);
-
                         // добавить в бд
                         bookDao.addBook(dto);
+                        // todo: добавить содержимое в бд
+
                     });
 
         } catch (IOException e) {
@@ -341,11 +343,34 @@ public class FillDatabaseHelper {
 
     }
 
+    public String content(String ref) {
+                StringBuilder sb = new StringBuilder();
+        try {
+//            String url = prepareUrl(ref);
+            Document d = Jsoup.connect(ref).get();
+            Elements select = d.select("body > dd");
+//            select.stream().limit(8).forEach(elem -> {
+//                sb.append("<p>").append(elem.text()).append("</p>");
+////                System.out.println("." + elem.wholeText() + ".");
+//            });
+            select.stream().filter(e -> {
+                Pattern pattern = Pattern.compile("^\\s*(Глава\\s\\d*$)");
+                boolean matches = pattern.matcher(e.text()).matches();
+                return matches;
+            }).forEach(el -> System.out.println(el.text()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+            return sb.toString();
+    }
+
     public static void main(String[] args) throws IOException {
-        String ref = "http://samlib.ru/m/metelxskij_n_a/indexvote.shtml";
+        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
+//        String ref = "http://samlib.ru/m/metelxskij_n_a/indexvote.shtml";
 //        String ref = "http://samlib.ru/p/pupkin_wasja_ibragimowich/indexvote.shtml";
 //        String top = "http://samlib.ru/rating/top40/";
         FillDatabaseHelper helper = new FillDatabaseHelper();
+        helper.content(ref);
 //        helper.checkTop40(top);
 //        helper.selectAuthorInfoFromSamlib(ref);
 //        System.out.println(dto);

@@ -100,4 +100,12 @@ public class FillDatabaseFromSamlibController {
         dbHelper.searchAndInsertBooksBySamlibId(ref, 100);
         return "filldb/filldb-welcome-page";
     }
+
+    @GetMapping("/content")
+    public String content(Model model) {
+        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
+        String content = dbHelper.content(ref);
+        model.addAttribute("content", content);
+        return "filldb/filldb-welcome-page";
+    }
 }
