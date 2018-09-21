@@ -40,9 +40,13 @@
     <button>Find all infos</button>
 </a>
 <hr>
-<a href="/filldb/allBooks"><button>Get books</button></a>
+<a href="/filldb/allBooks">
+    <button>Get books</button>
+</a>
 <hr>
-<a href="/filldb/content"><button>content</button></a>
+<a href="/filldb/content">
+    <button>content</button>
+</a>
 <c:if test="${not empty author}">
     <hr>
     <div>
@@ -82,6 +86,16 @@
                     <td>
                         <a href="/filldb/delete?authorId=${tempAuthor.authorId}">
                             <button>Delete</button>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/filldb/searchBooks?authorId=${tempAuthor.authorId}">
+                            <button>Search and add books</button>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/filldb/showBooks?authorId=${tempAuthor.authorId}">
+                            <button>Show books</button>
                         </a>
                     </td>
                 </tr>
@@ -128,20 +142,25 @@
             <th>Ref</th>
             <th>size</th>
         </tr>
-            <c:forEach items="${books}" var="b">
-                <tr>
-                    <td>${b.bookId}</td>
-                    <td>${b.title}</td>
-                    <td>${b.samlibRef}</td>
-                    <td>${b.size}</td>
-                </tr>
-            </c:forEach>
+        <c:forEach items="${books}" var="b">
+            <tr>
+                <td>${b.bookId}</td>
+                <td>${b.authorId}</td>
+                <td>${b.title}</td>
+                <td>${b.samlibRef}</td>
+                <td>${b.size}</td>
+            </tr>
+        </c:forEach>
     </table>
 </c:if>
 <c:if test="${not empty content}">
-    <p>
-        ${content}
-    </p>
+    <c:forEach items="${content}" var="entry">
+        <br>
+        <h3>${entry.key}</h3>
+        <div>
+                ${entry.value.content}
+        </div>
+    </c:forEach>
 </c:if>
 </body>
 </html>

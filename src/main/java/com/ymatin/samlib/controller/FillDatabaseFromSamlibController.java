@@ -6,6 +6,7 @@ import com.ymatin.samlib.dao.author.AuthorInfoDao;
 import com.ymatin.samlib.dao.author.AuthorInfoDto;
 import com.ymatin.samlib.dao.book.BookDao;
 import com.ymatin.samlib.dao.book.BookDto;
+import com.ymatin.samlib.dao.book.ChapterDto;
 import com.ymatin.samlib.service.FillDatabaseHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/filldb")
@@ -96,16 +98,13 @@ public class FillDatabaseFromSamlibController {
     }
 
     @GetMapping("/searchBooks")
-    public String searchBooks(@RequestParam("ref") String ref) {
-        dbHelper.searchAndInsertBooksBySamlibId(ref, 100);
+    public String searchBooks(@RequestParam("authorId") Long authorId) {
+        dbHelper.searchAndInsertBooksBySamlibId(authorId, 100, 700);
         return "filldb/filldb-welcome-page";
     }
 
-    @GetMapping("/content")
-    public String content(Model model) {
-        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
-        String content = dbHelper.content(ref);
-        model.addAttribute("content", content);
+    @GetMapping("/showBooks")
+    public String content(@RequestParam("authorId") Long authorId, Model model) {
         return "filldb/filldb-welcome-page";
     }
 }

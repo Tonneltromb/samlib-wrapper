@@ -3,6 +3,7 @@ package com.ymatin.samlib.dao.book;
 public class BookDto{
 
     private Long bookId;
+    private Long authorId;
     private String title;
     private String samlibRef;
     private Integer size;
@@ -15,6 +16,14 @@ public class BookDto{
 
     public void setBookId(Long bookId) {
         this.bookId = bookId;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
     }
 
     public String getTitle() {
@@ -45,6 +54,7 @@ public class BookDto{
     public String toString() {
         return "BookDto{" +
                 "bookId=" + bookId +
+                ", authorId=" + authorId +
                 ", title='" + title + '\'' +
                 ", samlibRef='" + samlibRef + '\'' +
                 ", size=" + size +

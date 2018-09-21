@@ -10,21 +10,21 @@ public class FillDatabaseHelperTest {
 
     @Test
     public void extractSamlibIdFromUrl() {
-        String samlibId = "/a/author/";
+        String samlibId = "a/author";
 
-        String url = "http://samlib.ru"+ samlibId +"indexvote.shtml";
+        String url = "http://samlib.ru/" + samlibId + "/indexvote.shtml";
         String result = dbHelper.extractSamlibIdFromUrl(url);
         assertEquals(samlibId, result);
 
-        url = "samlib.ru"+ samlibId +"indexvote.shtml";
+        url = "samlib.ru/" + samlibId + "/indexvote.shtml";
         result = dbHelper.extractSamlibIdFromUrl(url);
         assertEquals(samlibId, result);
 
-        url = samlibId +"indexvote.shtml";
+        url = samlibId + "/indexvote.shtml";
         result = dbHelper.extractSamlibIdFromUrl(url);
         assertEquals(samlibId, result);
 
-        url = "samlib.ru"+ samlibId;
+        url = "samlib.ru/" + samlibId;
         result = dbHelper.extractSamlibIdFromUrl(url);
         assertEquals(samlibId, result);
 

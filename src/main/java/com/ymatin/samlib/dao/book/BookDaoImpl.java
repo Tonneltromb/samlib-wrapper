@@ -16,8 +16,9 @@ import java.util.Objects;
 public class BookDaoImpl implements BookDao {
 
     private static final String SELECT_BOOK_BY_ID = "SELECT * FROM books WHERE book_ID = :bookId";
-    public static final String INSERT_BOOK = "INSERT INTO books (title, samlib_ref, size) VALUES (:title, :samlibRef, :size)";
+    public static final String INSERT_BOOK = "INSERT INTO books (author_ID, title, samlib_ref, size) VALUES (:authorId, :title, :samlibRef, :size)";
     private static final String SELECT_ALL_BOOKS = "SELECT * FROM books";
+    private static final String INSERT_CHAPTER = "INSERT INTO chapters (book_ID, part_number, title, content) VALUES (:bookId, :partNumber, :title, :content)";
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -42,11 +43,12 @@ public class BookDaoImpl implements BookDao {
     }
 
     @Override
-    public Long addBook(BookDto dto) {
+    public Long insertBook(BookDto dto) {
         Long bookId = null;
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource p = new MapSqlParameterSource();
         p.addValue("title", dto.getTitle());
+        p.addValue("authorId", dto.getAuthorId());
         p.addValue("samlibRef", dto.getSamlibRef());
         p.addValue("size", dto.getSize());
         int updatedRows = jdbcTemplate.update(INSERT_BOOK, p, keyHolder, new String[]{"book_ID"});
@@ -66,9 +68,20 @@ public class BookDaoImpl implements BookDao {
 
     }
 
+    @Override
+    public void insertChapter(ChapterDto dto) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("bookId", dto.getBookId());
+        params.put("partNumber", dto.getPartNumber());
+        params.put("title", dto.getTitle());
+        params.put("content", dto.getContent());
+        jdbcTemplate.update(INSERT_CHAPTER, params);
+    }
+
     private BookDto bookDtoMapper(ResultSet rs) throws SQLException {
         BookDto dto = new BookDto();
         dto.setBookId(rs.getLong("book_ID"));
+        dto.setAuthorId(rs.getLong("author_ID"));
         dto.setTitle(rs.getString("title"));
         dto.setSamlibRef(rs.getString("samlib_ref"));
         dto.setSize(rs.getInt("size"));

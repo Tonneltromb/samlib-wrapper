@@ -27,20 +27,34 @@ CREATE TABLE author_info (
 DROP TABLE IF EXISTS books;
 CREATE TABLE books (
   book_ID    INT AUTO_INCREMENT,
+  author_ID  INT AUTO_INCREMENT,
   title      VARCHAR(256) NOT NULL,
   samlib_ref VARCHAR(256) NOT NULL,
   size       INT,
-  PRIMARY KEY (book_ID)
+  PRIMARY KEY (book_ID),
+  FOREIGN KEY (author_ID) REFERENCES authors (author_ID)
 );
 
 DROP TABLE IF EXISTS chapters;
 CREATE TABLE chapters (
-  CHAPTER_ID INT AUTO_INCREMENT,
-  BOOK_ID    INT NOT NULL,
-  TITLE      VARCHAR(64),
-  PRIMARY KEY (CHAPTER_ID),
-  FOREIGN KEY (BOOK_ID) REFERENCES books (book_ID)
+  chapter_ID  INT AUTO_INCREMENT,
+  book_ID     INT NOT NULL,
+  part_number INT,
+  title       VARCHAR(64),
+  content     CLOB,
+  PRIMARY KEY (chapter_ID),
+  FOREIGN KEY (book_ID) REFERENCES books (book_ID)
 );
+
+-- todo table
+-- DROP TABLE IF EXISTS chapters_content;
+-- CREATE TABLE chapters_content (
+--   chapter_ID INT NOT NULL ,
+--   getBookContent CLOB
+--   PRIMARY KEY (chapter_ID),
+--
+-- );
+
 
 DROP TABLE IF EXISTS books_authors;
 CREATE TABLE books_authors (

@@ -7,8 +7,10 @@ import com.ymatin.samlib.dao.author.AuthorInfoDao;
 import com.ymatin.samlib.dao.author.AuthorInfoDto;
 import com.ymatin.samlib.dao.book.BookDao;
 import com.ymatin.samlib.dao.book.BookDto;
+import com.ymatin.samlib.dao.book.ChapterDto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,17 +168,17 @@ public class FillDatabaseHelper {
         if (url != null && !url.equals("")) {
             samlibId = url
                     .replaceAll("http://", "")
-                    .replaceAll("samlib.ru", "")
-                    .replaceAll("indexvote.shtml", "");
+                    .replaceAll("samlib.ru/", "")
+                    .replaceAll("/indexvote.shtml", "");
         }
         return samlibId;
     }
 
     private String prepareUrl(final String authorPageReference) {
         String url = authorPageReference;
-        String domainNamePart = "samlib.ru";
+        String domainNamePart = "samlib.ru/";
         String protocolPart = "http://";
-        String shtmlSuffixPart = "indexvote.shtml";
+        String shtmlSuffixPart = "/indexvote.shtml";
         boolean isContainsDomainNamePart = authorPageReference.contains(domainNamePart);
         boolean isContainsProtocolPart = authorPageReference.contains(protocolPart);
         boolean isContainsSuffixPart = authorPageReference.contains(shtmlSuffixPart);
@@ -301,86 +303,122 @@ public class FillDatabaseHelper {
     /**
      * Поиск произведений автора
      */
-    public void searchAndInsertBooksBySamlibId(String ref, int minimalAllowedSize) {
-        String samlibId = extractSamlibIdFromUrl(ref);
-//        authorDao.findAuthorBySamlibId(samlibId);
-        try {
-            String url = prepareUrl(ref);
-            Document d = Jsoup.connect(url).get();
+    public void searchAndInsertBooksBySamlibId(Long authorId, int minAllowedSize, int maxAllowedSize) {
+//        String samlibId_local = extractSamlibIdFromUrl(authorSamlibId);
+//        AuthorDto authorDto = authorDao.findAuthorBySamlibId(authorSamlibId);
+        AuthorDto authorDto = authorDao.findAuthorById(authorId);
+        if (authorDto != null && authorDto.getSamlibId() != null) {
+            try {
+                String samlibId = authorDto.getSamlibId();
+                String url = prepareUrl(samlibId);
+                Document d = Jsoup.connect(url).get();
 
-            Elements select = d
-                    .select("body > dd")
-                    .select("table + dl")
-                    .select("dl dt li");
+                Elements select = d
+                        .select("body > dd")
+                        .select("table + dl")
+                        .select("dl dt li");
 
-            select
-                    .stream()
-                    .filter(element -> {
-                        String text = element.select(" > a + b").text();
-                        Integer integer = extractInteger(text);
-                        return integer > minimalAllowedSize;
-                    })
-                    .forEach(e -> {
-                        BookDto dto = new BookDto();
-                        // извлечь название
-                        String title = e.select("> a > b").text();
-                        // извлечь размер
-                        Integer size = extractInteger(e.select("> a + b").text());
-                        // извлечь ссылку
-                        String href = e.select("> a").attr("href");
-                        dto.setTitle(title);
-                        dto.setSamlibRef(href);
-                        dto.setSize(size);
-                        // добавить в бд
-                        bookDao.addBook(dto);
-                        // todo: добавить содержимое в бд
-
-                    });
-
-        } catch (IOException e) {
-            e.printStackTrace();
+                select
+                        .stream()
+                        .filter(element -> {
+                            String text = element.select(" > a + b").text();
+                            Integer integer = extractInteger(text);
+                            return integer >= minAllowedSize && integer <= maxAllowedSize;
+                        })
+                        .forEach(e -> {
+                            BookDto dto = new BookDto();
+                            // извлечь название
+                            String title = e.select("> a > b").text();
+                            // извлечь размер
+                            Integer size = extractInteger(e.select("> a + b").text());
+                            // извлечь ссылку
+                            String href = e.select("> a").attr("href");
+                            // заполнить дто
+                            dto.setAuthorId(authorDto.getAuthorId());
+                            dto.setTitle(title);
+                            dto.setSamlibRef(href);
+                            dto.setSize(size);
+                            // добавить в бд
+                            Long bookId = bookDao.insertBook(dto);
+                            if (bookId != null) {
+                                // перейти на страницу книги и извлечь ее содержимое
+                                String bookUrl = prepareBookUrl(samlibId, href);
+                                Map<String, ChapterDto> bookContent = getBookContent(bookUrl);
+                                addChaptersToDB(bookContent);
+                            }
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
     }
 
-    public String content(String ref) {
-                StringBuilder sb = new StringBuilder();
+    private void addChaptersToDB(Map<String, ChapterDto> bookContent) {
+        bookContent.forEach((title, dto) -> bookDao.insertChapter(dto));
+    }
+
+    private String prepareBookUrl(String authorSamlibId, String bookSamlibId) {
+        return "http://samlib.ru/" + authorSamlibId + "/" + bookSamlibId;
+    }
+
+    public Map<String, ChapterDto> getBookContent(String ref) {
+        Map<String, ChapterDto> bookContent = new LinkedHashMap<>();
         try {
-//            String url = prepareUrl(ref);
+            // todo: made part search partRegex = "^\\s*(Часть\\s([1-9]?){2}$)|^\\s*(Часть первая)|^\\s*(Часть вторая)|^\\s*(Часть третья)|^\\s*(Часть четвертая)|^\\s*(Часть пятая)";
+            String prologueRegex = "^\\s*(Пролог)"; // ищем пролог
+            String epilogueRegex = "^\\s*(Эпилог)"; // ищем эпилог
+            String chapterRegex = "^\\s*(Глава\\s([1-9]?){2}$)"; // ищем главы
+
             Document d = Jsoup.connect(ref).get();
             Elements select = d.select("body > dd");
-//            select.stream().limit(8).forEach(elem -> {
-//                sb.append("<p>").append(elem.text()).append("</p>");
-////                System.out.println("." + elem.wholeText() + ".");
-//            });
-            select.stream().filter(e -> {
-                Pattern pattern = Pattern.compile("^\\s*(Глава\\s\\d*$)");
-                boolean matches = pattern.matcher(e.text()).matches();
-                return matches;
-            }).forEach(el -> System.out.println(el.text()));
+            ChapterDto currentChapter = new ChapterDto();
+            currentChapter.setContent("");
+            StringBuilder sb = new StringBuilder(currentChapter.getContent());
+            String currentChapterName = "default";
+
+            bookContent.put(currentChapterName, currentChapter);
+
+            for (Element e : select) {
+                String text = e.select("hr").size() > 0 ? e.textNodes().get(0).text() : e.text();
+                boolean matchPrologue = isMatchToRegex(prologueRegex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE, text);
+                boolean matchEpilogue = isMatchToRegex(epilogueRegex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE, text);
+                boolean matchChapter = isMatchToRegex(chapterRegex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE, text);
+                if (matchPrologue || matchChapter || matchEpilogue) {
+                    currentChapter.setContent(sb.toString());
+                    ChapterDto dto = new ChapterDto();
+                    dto.setTitle(text);
+                    dto.setContent("");
+                    currentChapterName = text;
+                    currentChapter = dto;
+                    bookContent.put(currentChapterName, currentChapter);
+                    sb = new StringBuilder(currentChapter.getContent());
+                }
+                sb.append("<p>").append(text).append("</p>"); // добавляем текст в поле getBookContent текущей главы(или пролога или эпилога)
+            }
+            currentChapter.setContent(sb.toString());
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-            return sb.toString();
+        return bookContent;
+    }
+
+    public boolean isMatchToRegex(String regex, int flags, String text) {
+        Pattern pattern = Pattern.compile(regex, flags);
+        return pattern.matcher(text).matches();
+    }
+
+    public boolean isMatchToRegex(String regex, String text) {
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(text).matches();
     }
 
     public static void main(String[] args) throws IOException {
-        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
+//        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
+        String ref = "http://samlib.ru/m/metelxskij_n_a/junling.shtml";
 //        String ref = "http://samlib.ru/m/metelxskij_n_a/indexvote.shtml";
 //        String ref = "http://samlib.ru/p/pupkin_wasja_ibragimowich/indexvote.shtml";
 //        String top = "http://samlib.ru/rating/top40/";
         FillDatabaseHelper helper = new FillDatabaseHelper();
-        helper.content(ref);
-//        helper.checkTop40(top);
-//        helper.selectAuthorInfoFromSamlib(ref);
-//        System.out.println(dto);
-//        String s = "100k";
-//        Pattern pattern = Pattern.compile("[0-9]+");
-//        Matcher matcher = pattern.matcher(s);
-//        String str = matcher.find() ? matcher.group() : "";
-//        System.out.println(str);
-//
-//        System.out.println(Integer.parseInt(s.split("\\D+")[0]));
-//        System.out.println(Integer.parseInt(""));
     }
 }
