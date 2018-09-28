@@ -122,37 +122,52 @@ public class FillDatabaseHelper {
         AuthorInfoDto dto = new AuthorInfoDto();
         Map<String, Integer> birthDateParts = prepareBirthDate(document);
         String authorInfo = prepareAboutAuthorInfo(document);
-//            todo String email = prepareEmail(document);
-//            todo String webSite = prepareWebSite(document);
+        String email = prepareEmail(document);
+        String webSite = prepareWebSite(document);
 
         dto.setAboutAuthor(authorInfo);
         dto.setDayOfBirth(birthDateParts.get("day"));
         dto.setMonthOfBirth(birthDateParts.get("month"));
         dto.setYearOfBirth(birthDateParts.get("year"));
-//            todo dto.setEmail(email);
-//            todo dto.setWebSite(webSite);
+        dto.setEmail(email);
+        dto.setWebSite(webSite);
         return dto;
     }
 
     private String prepareWebSite(Document document) {
         String webSite = null;
+        Optional<Element> optional = document
+                .select("ul li")
+                .stream()
+                .filter(element -> {
+                    Element b = element.select("b").get(0);
+                    String original = b.text();
+                    String template = "WWW:";
+                    return original.equals(template);
+                })
+                .findFirst();
+        if (optional.isPresent()) {
+            webSite = optional.get().select("a").get(0).attr("href");
+        }
         return webSite;
     }
 
     private String prepareEmail(Document document) {
         String email = null;
-//        Optional<Element>  optional = document
-//                .select("ul li b")
-//                .stream()
-//                .filter(element -> {
-//                    String original = new String(element.text().getBytes(), StandardCharsets.UTF_8);
-//                    String template = new String("Адрес:".getBytes(), StandardCharsets.UTF_8);
-//                    return original.equals(template);
-//        })
-//                .findFirst();
-//        if (optional.isPresent()) {
-//            email = optional.get().text();
-//        }
+        Optional<Element> optional = document
+                .select("ul li")
+                .stream()
+                .filter(element -> {
+                    Element b = element.select("b").get(0);
+                    String original = b.text();
+                    // ВНИМАНИЕ!!! на момент написания кода слово "Адрес:" на самиздате состояло из: А(англ.) д(рус.) р(англ.) е(англ) с(рус.) :(любая раскладка)
+                    String template = "Aдpeс:";
+                    return original.equals(template);
+                })
+                .findFirst();
+        if (optional.isPresent()) {
+            email = optional.get().select("u").get(0).text();
+        }
         return email;
     }
 
@@ -415,10 +430,14 @@ public class FillDatabaseHelper {
 
     public static void main(String[] args) throws IOException {
 //        String ref = "http://samlib.ru/m/metelxskij_n_a/ws.shtml";
-        String ref = "http://samlib.ru/m/metelxskij_n_a/junling.shtml";
+//        String ref = "http://samlib.ru/m/metelxskij_n_a/junling.shtml";
 //        String ref = "http://samlib.ru/m/metelxskij_n_a/indexvote.shtml";
-//        String ref = "http://samlib.ru/p/pupkin_wasja_ibragimowich/indexvote.shtml";
+        String ref = "http://samlib.ru/p/pupkin_wasja_ibragimowich/indexvote.shtml";
 //        String top = "http://samlib.ru/rating/top40/";
         FillDatabaseHelper helper = new FillDatabaseHelper();
+        String url = helper.prepareUrl(ref);
+        Document document = Jsoup.connect(url).get();
+        String s = helper.prepareWebSite(document);
+        System.out.println(s);
     }
 }
