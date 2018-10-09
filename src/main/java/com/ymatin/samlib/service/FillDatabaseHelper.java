@@ -122,8 +122,8 @@ public class FillDatabaseHelper {
         AuthorInfoDto dto = new AuthorInfoDto();
         Map<String, Integer> birthDateParts = prepareBirthDate(document);
         String authorInfo = prepareAboutAuthorInfo(document);
-        String email = prepareEmail(document);
-        String webSite = prepareWebSite(document);
+        String email = findEmail(document);
+        String webSite = findWebSite(document);
 
         dto.setAboutAuthor(authorInfo);
         dto.setDayOfBirth(birthDateParts.get("day"));
@@ -134,7 +134,10 @@ public class FillDatabaseHelper {
         return dto;
     }
 
-    private String prepareWebSite(Document document) {
+    /**
+     * Метод поиска сайта автора в документе
+     */
+    private String findWebSite(Document document) {
         String webSite = null;
         Optional<Element> optional = document
                 .select("ul li")
@@ -152,7 +155,10 @@ public class FillDatabaseHelper {
         return webSite;
     }
 
-    private String prepareEmail(Document document) {
+    /**
+     * Метод поиска email-адреса автора в документе
+     */
+    private String findEmail(Document document) {
         String email = null;
         Optional<Element> optional = document
                 .select("ul li")
@@ -437,7 +443,7 @@ public class FillDatabaseHelper {
         FillDatabaseHelper helper = new FillDatabaseHelper();
         String url = helper.prepareUrl(ref);
         Document document = Jsoup.connect(url).get();
-        String s = helper.prepareWebSite(document);
+        String s = helper.findWebSite(document);
         System.out.println(s);
     }
 }
