@@ -28,7 +28,7 @@
 </form>
 <hr>
 <form action="/filldb/searchBooks">
-    <input type="text" name="ref"/>
+    <input type="number" name="authorId"/>
     <input type="submit" value="Find books"/>
 </form>
 <hr>
@@ -55,15 +55,20 @@
         <h4>First Name</h4><span>${author.firstName}</span><br>
         <h4>Last name</h4><span>${author.lastName}</span><br>
         <h4>Father name</h4><span>${author.fatherName}</span><br>
+        <h4>Short name</h4><span>${author.shortName}</span><br>
         <h4>Pseudonym</h4><span>${author.pseudonym}</span><br>
         <h4>Samlib ID</h4><span>${author.samlibId}</span><br>
     </div>
     <c:if test="${not empty info}">
         <div>
             <h3>Additional info</h3>
+            <h4>Info ID</h4><span>${info.infoId}</span><br>
+            <h4>Author ID</h4><span>${info.authorId}</span><br>
             <h4>Day</h4><span>${info.dayOfBirth}</span><br>
             <h4>Month</h4><span>${info.monthOfBirth}</span><br>
             <h4>Year</h4><span>${info.yearOfBirth}</span><br>
+            <h4>Web site</h4><span>${info.webSite}</span><br>
+            <h4>email</h4><span>${info.email}</span><br>
             <h4>About</h4><span>${info.aboutAuthor}</span><br>
         </div>
     </c:if>
@@ -138,6 +143,7 @@
     <table>
         <tr>
             <th>Book Id</th>
+            <th>Author Id</th>
             <th>Title</th>
             <th>Ref</th>
             <th>size</th>

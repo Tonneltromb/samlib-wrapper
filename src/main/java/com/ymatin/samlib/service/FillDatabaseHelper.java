@@ -48,7 +48,6 @@ public class FillDatabaseHelper {
 
     public Long addAuthorByPageReference(String authorPageReference) {
         Long authorId = null;
-        Long authorInfoId = null;
         try {
             String url = prepareUrl(authorPageReference);
             Document document = Jsoup.connect(url).get();
@@ -94,12 +93,15 @@ public class FillDatabaseHelper {
         }
     }
 
+    /**
+     * Извлекаем основную информацию об авторе
+     */
     private AuthorDto selectAuthorFromSamlib(Document document, String url) {
         AuthorDto dto = new AuthorDto();
         try {
             String samlibId = extractSamlibIdFromUrl(url);
-            String shortName = prepareShortName(document);
-            Map<String, String> authorInitials = prepareAuthorInitials(url);
+            String shortName = selectShortName(document);
+            Map<String, String> authorInitials = selectAuthorInitials(url);
 
             dto.setFirstName(authorInitials.get("firstName"));
             dto.setLastName(authorInitials.get("lastName"));
@@ -111,19 +113,17 @@ public class FillDatabaseHelper {
             e.printStackTrace();
         }
         return dto;
-//        System.out.println(dl_dt_li_firstChiElements.stream().filter(e -> {
-//            String text = e.select("a + b").get(0).text().split("\\D+")[0];
-//            text = !text.equals("") ? text : "0" ;
-//            return Integer.parseInt(text) > 100;
-//        }).collect(Collectors.toList()).size());
     }
 
+    /**
+     * Извлекаем дополнительную информацию об авторе
+     */
     private AuthorInfoDto selectAuthorInfoFromSamlib(Document document, String url) {
         AuthorInfoDto dto = new AuthorInfoDto();
-        Map<String, Integer> birthDateParts = prepareBirthDate(document);
-        String authorInfo = prepareAboutAuthorInfo(document);
-        String email = findEmail(document);
-        String webSite = findWebSite(document);
+        Map<String, Integer> birthDateParts = selectBirthDateParts(document);
+        String authorInfo = selectAboutAuthorInfo(document);
+        String email = selectEmail(document);
+        String webSite = selectWebSite(document);
 
         dto.setAboutAuthor(authorInfo);
         dto.setDayOfBirth(birthDateParts.get("day"));
@@ -135,9 +135,9 @@ public class FillDatabaseHelper {
     }
 
     /**
-     * Метод поиска сайта автора в документе
+     * Поиск сайта автора
      */
-    private String findWebSite(Document document) {
+    private String selectWebSite(Document document) {
         String webSite = null;
         Optional<Element> optional = document
                 .select("ul li")
@@ -156,9 +156,9 @@ public class FillDatabaseHelper {
     }
 
     /**
-     * Метод поиска email-адреса автора в документе
+     * Поиск email-адреса автора
      */
-    private String findEmail(Document document) {
+    private String selectEmail(Document document) {
         String email = null;
         Optional<Element> optional = document
                 .select("ul li")
@@ -177,13 +177,20 @@ public class FillDatabaseHelper {
         return email;
     }
 
-    private String prepareAboutAuthorInfo(Document document) {
+    /**
+     * Поиск информации из элемента "Об авторе:"
+     */
+    private String selectAboutAuthorInfo(Document document) {
+        // todo: у некоторых авторов все не отображается, а есть ссылка, нужно перейти по ней и извдечь оттуда
         return document
                 .select("dd i:first-child")
                 .get(0)
                 .text();
     }
 
+    /**
+     * Извлечение samlibId из URL
+     */
     String extractSamlibIdFromUrl(String url) {
         String samlibId = "";
         if (url != null && !url.equals("")) {
@@ -191,11 +198,17 @@ public class FillDatabaseHelper {
                     .replaceAll("http://", "")
                     .replaceAll("samlib.ru/", "")
                     .replaceAll("/indexvote.shtml", "");
+            if (samlibId.endsWith("/")){
+                samlibId = samlibId.substring(0, samlibId.length() - 1); }
         }
         return samlibId;
     }
 
+    /**
+     * Подготовка адреса из переданной ссылки на страницу автора
+     */
     private String prepareUrl(final String authorPageReference) {
+        // todo: добавить проверку введенной ссылки на регулярное выражение [a-z]/любое количество букв
         String url = authorPageReference;
         String domainNamePart = "samlib.ru/";
         String protocolPart = "http://";
@@ -210,12 +223,15 @@ public class FillDatabaseHelper {
         return url;
     }
 
+    /**
+     * Извлечение числа из строки
+     */
     private Integer extractInteger(String string) {
         // todo: добавить обработчик эксепшена
         return Integer.parseInt(string.split("\\D+")[0]);
     }
 
-    private String prepareShortName(String string) {
+    private String selectShortName(String string) {
         if (string != null && !string.trim().equals("") && string.length() > 0) {
             String[] splitResult = string.split(" ");
             string = splitResult[0];
@@ -231,7 +247,7 @@ public class FillDatabaseHelper {
         return string;
     }
 
-    private String prepareShortName(Document document) {
+    private String selectShortName(Document document) {
         String replaceResult = document
                 .select("body center h3")
                 .get(0)
@@ -239,10 +255,13 @@ public class FillDatabaseHelper {
                 .get(0)
                 .text()
                 .replace(":", "");
-        return prepareShortName(replaceResult);
+        return selectShortName(replaceResult);
     }
 
-    private Map<String, String> prepareAuthorInitials(String url) throws IOException {
+    /**
+     * Извлечение инициалов автора
+     */
+    private Map<String, String> selectAuthorInitials(String url) throws IOException {
         Map<String, String> initialsMap = new HashMap<>(3);
         String firstName = null;
         String lastName = null;
@@ -286,7 +305,10 @@ public class FillDatabaseHelper {
         return Collections.unmodifiableMap(initialsMap);
     }
 
-    private Map<String, Integer> prepareBirthDate(Document document) {
+    /**
+     * Извлечение даты рождения
+     */
+    private Map<String, Integer> selectBirthDateParts(Document document) {
         Map<String, Integer> birthDatePartsMap = new HashMap<>(3);
         Integer day = null;
         Integer month = null;
@@ -364,7 +386,7 @@ public class FillDatabaseHelper {
                             if (bookId != null) {
                                 // перейти на страницу книги и извлечь ее содержимое
                                 String bookUrl = prepareBookUrl(samlibId, href);
-                                Map<String, ChapterDto> bookContent = getBookContent(bookUrl);
+                                Map<String, ChapterDto> bookContent = getBookContent(bookUrl, bookId);
                                 addChaptersToDB(bookContent);
                             }
                         });
@@ -382,7 +404,7 @@ public class FillDatabaseHelper {
         return "http://samlib.ru/" + authorSamlibId + "/" + bookSamlibId;
     }
 
-    public Map<String, ChapterDto> getBookContent(String ref) {
+    public Map<String, ChapterDto> getBookContent(String ref, Long bookId) {
         Map<String, ChapterDto> bookContent = new LinkedHashMap<>();
         try {
             // todo: made part search partRegex = "^\\s*(Часть\\s([1-9]?){2}$)|^\\s*(Часть первая)|^\\s*(Часть вторая)|^\\s*(Часть третья)|^\\s*(Часть четвертая)|^\\s*(Часть пятая)";
@@ -393,6 +415,7 @@ public class FillDatabaseHelper {
             Document d = Jsoup.connect(ref).get();
             Elements select = d.select("body > dd");
             ChapterDto currentChapter = new ChapterDto();
+            currentChapter.setBookId(bookId);
             currentChapter.setContent("");
             StringBuilder sb = new StringBuilder(currentChapter.getContent());
             String currentChapterName = "default";
@@ -407,6 +430,7 @@ public class FillDatabaseHelper {
                 if (matchPrologue || matchChapter || matchEpilogue) {
                     currentChapter.setContent(sb.toString());
                     ChapterDto dto = new ChapterDto();
+                    dto.setBookId(bookId);
                     dto.setTitle(text);
                     dto.setContent("");
                     currentChapterName = text;
@@ -443,7 +467,7 @@ public class FillDatabaseHelper {
         FillDatabaseHelper helper = new FillDatabaseHelper();
         String url = helper.prepareUrl(ref);
         Document document = Jsoup.connect(url).get();
-        String s = helper.findWebSite(document);
+        String s = helper.selectWebSite(document);
         System.out.println(s);
     }
 }

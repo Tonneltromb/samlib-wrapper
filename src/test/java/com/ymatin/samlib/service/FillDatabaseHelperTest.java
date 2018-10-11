@@ -31,5 +31,9 @@ public class FillDatabaseHelperTest {
         url = samlibId;
         result = dbHelper.extractSamlibIdFromUrl(url);
         assertEquals(samlibId, result);
+
+        url = "http://samlib.ru/" + samlibId + "/";
+        result = dbHelper.extractSamlibIdFromUrl(url);
+        assertEquals(samlibId, result);
     }
 }
